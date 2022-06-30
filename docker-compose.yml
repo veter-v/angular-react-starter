@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  angular:
+    build: ./angular
+    container_name: angular-app
+    restart: unless-stopped
+    ports:
+      - "8080:80"
