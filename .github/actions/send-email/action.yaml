@@ -30,7 +30,7 @@ runs:
       with:
         # Actions cannot access secrets so pass them in as inputs
         server_address: smtp.gmail.com # Required mail server address
-        server_port: 587 # Required mail server port
+        server_port: 465 # Required mail server port
         username: ${{ inputs.username }} # Optional (recommended): mail server username
         password: ${{ inputs.password }} # Optional (recommended) mail server password
         subject: Github Actions job result # Required mail subject
