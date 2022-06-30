@@ -2,7 +2,7 @@ version: '3'
 
 services:
   angular:
-    build: ./angular
+    image: ghcr.io/veter-v/angular-react-starter:master
     container_name: angular-app
     restart: unless-stopped
     ports:
