@@ -118,5 +118,5 @@ jobs:
           username: ${{secrets.MAIL_USERNAME}} # Optional (recommended): mail server username
           password: ${{secrets.MAIL_PASSWORD}} # Optional (recommended) mail server password
           to: ${{secrets.MAIL_ADDRESS}} # Required recipients' addresses:
-          body: ${{env.message_body}} # Optional plain body:
+          body: It's OK! #${{env.message_body}} # Optional plain body:
           reply_to: ${{secrets.MAIL_USERNAME}} # Optional recipient of the email response
