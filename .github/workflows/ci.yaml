@@ -1,0 +1,122 @@
+name: Create-and-publish-a-Docker-image
+
+on:
+  push:
+    branches: [ master ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  ### Test
+  test:
+    runs-on: ubuntu-latest
+
+    outputs:
+      output_time: ${{ steps.time_start.outputs.JOB_START_TIME }}
+
+    defaults:
+      run:
+        working-directory: ./angular
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get time start workflow
+        run: echo "::set-output name=JOB_START_TIME::$(date +%s)"
+        id: time_start
+
+      - name: Use Node.js 14.x
+        #if: ${{ github.ref }} == 'dev'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14.x
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm test -- --watch=false --browsers=ChromeHeadless
+
+      ### Sending email when test is failed
+      - uses: actions/checkout@v3
+      - name: Send mail
+        if: ${{ failure() }}
+        uses: ./.github/actions/send-email
+        with:
+          username: ${{secrets.MAIL_USERNAME}} # Optional (recommended): mail server username
+          password: ${{secrets.MAIL_PASSWORD}} # Optional (recommended) mail server password
+          to: ${{secrets.MAIL_ADDRESS}} # Required recipients' addresses:
+          body: Testing of ${{github.repository}} is failed! # Optional plain body:
+          reply_to: ${{secrets.MAIL_USERNAME}} # Optional recipient of the email response
+
+  ### build
+  build-and-push-image:
+    needs: ['test']
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./angular
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js 14.x
+        #if: ${{ github.ref }} == 'dev' # if branch = master, then npm run build --prod
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14.x
+      - run: npm ci
+      - run: npm run build --prod
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Create message body failure
+        if: ${{ failure() }}
+        run: echo "message_body=Build job of ${{github.repository}} is failed!" >> $GITHUB_ENV
+
+      - name: Get time end workflow
+        run: echo "::set-output name=JOB_END_TIME::$(date +%s)"
+        id: time_end
+
+      - name: Get execution time
+        run: |
+          let a=${{ steps.time_end.outputs.JOB_END_TIME }}-${{ needs.test.outputs.output_time }}
+          echo "::set-output name=JOB_EXECUTION_TIME::$(echo $a)"
+        id: execution_time
+
+      - name: Create message body success
+        if: ${{ success() }}
+        run: echo "message_body=Build job of ${{github.repository}} is success! Duration was ${{ steps.execution_time.outputs.JOB_EXECUTION_TIME }} seconds" >> $GITHUB_ENV
+
+      ### Sending email when deploy successfully of failure
+      - uses: actions/checkout@v3
+      - name: Send mail
+        uses: ./.github/actions/send-email
+        with:
+          username: ${{secrets.MAIL_USERNAME}} # Optional (recommended): mail server username
+          password: ${{secrets.MAIL_PASSWORD}} # Optional (recommended) mail server password
+          to: ${{secrets.MAIL_ADDRESS}} # Required recipients' addresses:
+          body: ${{env.message_body}} # Optional plain body:
+          reply_to: ${{secrets.MAIL_USERNAME}} # Optional recipient of the email response

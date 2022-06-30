@@ -1,0 +1,45 @@
+name: "Send email"
+description: "Send email action"
+inputs:
+  username:
+    required: true
+    description: "Optional (recommended): mail server username"
+  password:
+    required: true
+    description: "Optional (recommended) mail server password"
+  to:
+    required: true
+    description: "Required recipients' addresses"
+  body:
+    required: false
+    description: "Optional plain body"
+  reply_to:
+    required: false
+    description: "Optional recipient of the email response"
+  convert_markdown:
+    required: false
+    description: "Optional converting Markdown to HTML (set content_type to text/html too)"
+  attachments:
+    required: false
+    description: "Optional attachments"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: dawidd6/action-send-mail@v3
+      with:
+        # Actions cannot access secrets so pass them in as inputs
+        server_address: smtp.gmail.com # Required mail server address
+        server_port: 465 # Required mail server port
+        username: ${{ inputs.username }} # Optional (recommended): mail server username
+        password: ${{ inputs.password }} # Optional (recommended) mail server password
+        subject: Github Actions job result # Required mail subject
+        to: ${{ inputs.to }} # Required recipients' addresses:
+        from: veter-v # <user@example.com> # Required sender full name (address can be skipped):
+        secure: true # Optional whether this connection use TLS (default is true if server_port is 465)
+        body: ${{ inputs.body }} # Optional plain body
+        reply_to: ${{ inputs.reply_to }} # Optional recipient of the email response
+        ignore_cert: true # Optional unsigned/invalid certificates allowance
+        convert_markdown: true # Optional converting Markdown to HTML (set content_type to text/html too)
+        attachments: ${{ inputs.attachments }} # Optional attachments
+        priority: normal # Optional priority: 'high', 'normal' (default) or 'low'
