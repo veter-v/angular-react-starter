@@ -27,7 +27,6 @@ jobs:
         id: time_start
 
       - name: Use Node.js 14.x
-        #if: ${{ github.ref }} == 'dev'
         uses: actions/setup-node@v3
         with:
           node-version: 14.x
@@ -64,7 +63,6 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Use Node.js 14.x
-        #if: ${{ github.ref }} == 'dev' # if branch = master, then npm run build --prod
         uses: actions/setup-node@v3
         with:
           node-version: 14.x
