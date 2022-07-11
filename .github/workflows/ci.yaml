@@ -26,11 +26,13 @@ jobs:
         run: echo "::set-output name=JOB_START_TIME::$(date +%s)"
         id: time_start
 
-      - name: Use Node.js 14.x
+      - name: Get Node.JS version from package.json
+        id: get-versions
+        run: echo ::set-output name=node::$(jq -r .engines.node ./angular/package.json)
         if: ${{ github.ref }} == 'develop'
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3
         with:
-          node-version: 14.x
+          node-version: ${{steps.get-versions.outputs.node}}
       - run: npm ci
       - run: npm run build --if-present
       - run: npm test -- --watch=false --browsers=ChromeHeadless
@@ -63,11 +65,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Use Node.js 14.x
+      - name: Get Node.JS version from package.json
+        id: get-versions
+        run: echo ::set-output name=node::$(jq -r .engines.node ./angular/package.json)
         if: ${{ github.ref }} == 'develop'
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3
         with:
-          node-version: 14.x
+          node-version: ${{steps.get-versions.outputs.node}}
       - run: npm ci
       - run: npm run build --prod
 
